@@ -1,0 +1,12 @@
+{
+  "name": "tafsir-data",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "submit": "node pipeline/submit.mjs",
+    "collect": "node pipeline/collect.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.3.0"
+  }
+}

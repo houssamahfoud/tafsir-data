@@ -1,0 +1,58 @@
+name: Submit translations
+
+# Sends translation and/or synthesis requests for the chosen surahs to the
+# Anthropic Batches API. Results are written by the "Collect results" workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: What to produce
+        type: choice
+        options: [both, translate, synthesis]
+        default: both
+      surahs:
+        description: Surahs, e.g. 1 or 103,112-114 or 1-114
+        required: true
+      model:
+        description: Claude model
+        type: choice
+        options: [claude-sonnet-5-5, claude-opus-5-5, claude-haiku-5-5]
+        default: claude-sonnet-5-5
+      out:
+        description: Optional folder for a pilot run (e.g. pilot/sonnet); empty = published data
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: data-repo-writes
+  cancel-in-progress: false
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Submit translations
+        if: inputs.task != 'synthesis'
+        run: node pipeline/submit.mjs --task translate --surahs "${{ inputs.surahs }}" --model "${{ inputs.model }}" --out "${{ inputs.out }}"
+      - name: Submit syntheses
+        if: inputs.task != 'translate'
+        run: node pipeline/submit.mjs --task synthesis --surahs "${{ inputs.surahs }}" --model "${{ inputs.model }}" --out "${{ inputs.out }}"
+      - name: Save the batch records
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add jobs
+          git diff --cached --quiet || git commit -m "Submit ${{ inputs.task }} for surahs ${{ inputs.surahs }} (${{ inputs.model }})"
+          git pull --rebase && git push
