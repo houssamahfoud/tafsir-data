@@ -1,6 +1,7 @@
 name: Collect results
 
-# Every 30 minutes, writes the results of finished batches to translations/
+# Every 30 minutes, writes the results of finished batches (and their token
+# usage) to translations/
 # and synthesis/, then commits them so the app can download them.
 on:
   schedule:
@@ -25,7 +26,7 @@ jobs:
       - name: Skip when no batch is pending
         id: pending
         run: |
-          if grep -L '"done":true' jobs/*.json 2>/dev/null | grep -q .; then echo "run=true" >> "$GITHUB_OUTPUT"; fi
+          if grep -L '"usage":' jobs/*.json 2>/dev/null | grep -q .; then echo "run=true" >> "$GITHUB_OUTPUT"; fi
       - uses: actions/setup-node@v4
         if: steps.pending.outputs.run == 'true'
         with:

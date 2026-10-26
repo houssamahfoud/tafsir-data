@@ -18,9 +18,29 @@ function textOf(message) {
     .trim();
 }
 
+// Token totals of a batch, to know what a run really cost.
+function addUsage(total, usage) {
+  for (const key of ['input_tokens', 'output_tokens', 'cache_creation_input_tokens', 'cache_read_input_tokens']) {
+    total[key] = (total[key] ?? 0) + (usage?.[key] ?? 0);
+  }
+  return total;
+}
+
+async function recordUsage(jobFile, job) {
+  const usage = {};
+  for await (const result of await client.messages.batches.results(job.batchId)) {
+    if (result.result.type === 'succeeded') addUsage(usage, result.result.message.usage);
+  }
+  await writeJson(jobFile, { ...job, usage });
+  console.log(`${job.batchId}: usage recorded`, usage);
+}
+
 async function collect(jobFile) {
   const job = await readJson(jobFile);
-  if (job.done) return;
+  if (job.done) {
+    if (!job.usage) await recordUsage(jobFile, job);
+    return;
+  }
   const batch = await client.messages.batches.retrieve(job.batchId);
   if (batch.processing_status !== 'ended') {
     console.log(`${job.batchId}: ${batch.processing_status}`, batch.request_counts);
@@ -29,8 +49,10 @@ async function collect(jobFile) {
 
   const outputs = new Map(); // custom_id -> text
   const failed = [];
+  const usage = {};
   for await (const result of await client.messages.batches.results(job.batchId)) {
     const message = result.result.type === 'succeeded' ? result.result.message : null;
+    if (message) addUsage(usage, message.usage);
     if (!message || message.stop_reason !== 'end_turn') {
       failed.push({ id: result.custom_id, reason: message?.stop_reason ?? result.result.type });
       continue;
@@ -96,6 +118,7 @@ async function collect(jobFile) {
     counts: batch.request_counts,
     written,
     failed,
+    usage,
   });
   console.log(`${job.batchId}: ended, ${written} written, ${failed.length} failed`);
 }
