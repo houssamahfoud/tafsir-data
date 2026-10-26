@@ -43,7 +43,8 @@ async function collect(jobFile) {
   }
   const batch = await client.messages.batches.retrieve(job.batchId);
   if (batch.processing_status !== 'ended') {
-    console.log(`${job.batchId}: ${batch.processing_status}`, batch.request_counts);
+    // As a workflow annotation, so the status can be read through the GitHub API.
+    console.log(`::notice title=${job.batchId}::${job.model} ${job.task} ${batch.processing_status} ${JSON.stringify(batch.request_counts)} expires ${batch.expires_at}`);
     return;
   }
 
