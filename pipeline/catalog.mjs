@@ -1,4 +1,4 @@
-// The 30 tafsirs translated by the pipeline (same list and order as the app's
+// The 31 tafsirs translated by the pipeline (same list and order as the app's
 // src/data/tafsirs.ts CORPUS). `lang` is the language of the source text.
 export const CORPUS = [
   ['ar-tafsir-al-tabari', 'ar', 'al-Tabari', 'Jami al-Bayan'],
@@ -28,6 +28,7 @@ export const CORPUS = [
   ['tafsir-fe-zalul-quran-syed-qatab', 'ur', 'Sayyid Qutb', 'Fi Zilal al-Quran (Urdu translation)'],
   ['ar-tafseer-tahrir-al-tanwir', 'ar', "Ibn 'Ashur", 'al-Tahrir wa al-Tanwir'],
   ['adwa-al-bayan', 'ar', 'al-Shinqiti', "Adwa' al-Bayan"],
+  ['tafsir-al-shaarawi', 'ar', "al-Sha'rawi", "Tafsir al-Sha'rawi (surahs 1-53, fragments of 54-66)"],
   ['tafsir-ibn-uthaymeen', 'ar', "Ibn 'Uthaymin", 'Tafsir al-Quran al-Karim'],
   ['abu-bakr-jabir-al-jazairi', 'ar', "al-Jaza'iri", 'Aysar al-Tafasir'],
   ['ar-tafsir-muyassar', 'ar', 'King Fahd Complex', 'al-Tafsir al-Muyassar'],

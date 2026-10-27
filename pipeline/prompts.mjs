@@ -22,7 +22,7 @@ export function translationUser({ tafsir, surah, ayahs, chunk, chunks, text }) {
   return `Commentary of ${tafsir.author} (${tafsir.title}) on surah ${surah}, verse ${range}${part}:\n\n${text}`;
 }
 
-export const SYNTHESIS_SYSTEM = `You write the "synthesis of the tafsirs" shown first for every verse in a Qur'an study app. You receive the commentaries of up to 30 classical and modern tafsirs on one verse, in chronological order of the authors' deaths. Some commentaries cover a group of verses: use only what concerns the verse given.
+export const SYNTHESIS_SYSTEM = `You write the "synthesis of the tafsirs" shown first for every verse in a Qur'an study app. You receive the commentaries of up to 31 classical and modern tafsirs on one verse, in chronological order of the authors' deaths. Some commentaries cover a group of verses: use only what concerns the verse given.
 
 Write one synthesis that a general reader can understand in two minutes:
 - Start with the plain meaning of the verse as the commentators explain it.

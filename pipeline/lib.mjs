@@ -20,7 +20,15 @@ export async function writeJson(file, value) {
 }
 
 // Returns the original text of every verse of a surah (index = ayah - 1).
+// Tafsirs missing from spa5k/tafsir_api are kept in originals/<id>/, in the same
+// format; a surah they do not cover has no file and comes back empty.
 export async function fetchOriginal(id, surah, count) {
+  const localDir = path.join(ROOT, 'originals', id);
+  if (existsSync(localDir)) {
+    const texts = Array(count).fill('');
+    for (const e of await readJson(path.join(localDir, `${surah}.json`), [])) texts[e.ayah - 1] = (e.text ?? '').trim();
+    return texts;
+  }
   for (let attempt = 1; ; attempt++) {
     const res = await fetch(`${SOURCE_BASE}/${id}/${surah}.json`);
     if (res.ok) {
