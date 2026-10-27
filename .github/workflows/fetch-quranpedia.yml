@@ -1,0 +1,30 @@
+name: Fetch Quranpedia dump
+
+# Downloads tafsir books from the Quranpedia data dumps (quranpedia.net/dumps)
+# onto the quranpedia-raw branch, so they can be inspected and converted.
+on:
+  workflow_dispatch:
+    inputs:
+      books:
+        description: Book ids, space separated
+        default: '18 27803'
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          git checkout --orphan quranpedia-raw
+          git rm -rq --cached . && rm -rf -- * .github
+          curl -fsSL -o manifest.json https://quranpedia.net/dumps/manifest.json
+          for id in ${{ inputs.books }}; do
+            curl -fsSL -o "tafsir-book-$id.json.gz" "https://quranpedia.net/dumps/tafsir-book-$id.json.gz"
+          done
+          curl -fsSL -o LICENSE.md https://quranpedia.net/dumps/LICENSE.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A && git commit -qm "Quranpedia dump" && git push -f origin quranpedia-raw
