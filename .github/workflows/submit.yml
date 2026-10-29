@@ -8,7 +8,7 @@ on:
       task:
         description: What to produce
         type: choice
-        options: [both, translate, synthesis]
+        options: [both, translate, synthesis, summary]
         default: both
       surahs:
         description: Surahs, e.g. 1 or 103,112-114 or 1-114
@@ -44,11 +44,14 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Submit translations
-        if: inputs.task != 'synthesis'
+        if: inputs.task == 'both' || inputs.task == 'translate'
         run: node pipeline/submit.mjs --task translate --surahs "${{ inputs.surahs }}" --model "${{ inputs.model }}" --out "${{ inputs.out }}"
       - name: Submit syntheses
-        if: inputs.task != 'translate'
+        if: inputs.task == 'both' || inputs.task == 'synthesis'
         run: node pipeline/submit.mjs --task synthesis --surahs "${{ inputs.surahs }}" --model "${{ inputs.model }}" --out "${{ inputs.out }}"
+      - name: Submit surah summaries
+        if: inputs.task == 'summary'
+        run: node pipeline/submit.mjs --task summary --surahs "${{ inputs.surahs }}" --model "${{ inputs.model }}" --out "${{ inputs.out }}"
       - name: Save the batch records
         run: |
           git config user.name "github-actions[bot]"

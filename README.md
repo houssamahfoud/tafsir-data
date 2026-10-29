@@ -8,6 +8,7 @@ Données de l'app Tafsir : traductions des tafsirs (arabe, français, anglais) e
 | --- | --- |
 | `translations/<langue>/<tafsir>/<sourate>.json` | Traduction d'un tafsir pour une sourate : un texte par verset |
 | `synthesis/<sourate>.json` | Synthèse de tous les tafsirs, verset par verset : `{ "ar": [...], "fr": [...], "en": [...] }` |
+| `summaries.json` | Présentation de chaque sourate en trois phrases : `{ "ar": [...], "fr": [...], "en": [...] }` (index = sourate − 1) |
 | `originals/<tafsir>/<sourate>.json` | Textes originaux absents de spa5k/tafsir_api, au même format |
 | `jobs/` | Suivi des lots envoyés à l'API |
 | `pilot/` | Essais de comparaison entre modèles (non utilisés par l'app) |

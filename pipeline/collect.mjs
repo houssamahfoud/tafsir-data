@@ -6,7 +6,7 @@ import { readdir } from 'node:fs/promises';
 import Anthropic from '@anthropic-ai/sdk';
 
 import { VERSE_COUNTS } from './catalog.mjs';
-import { readJson, ROOT, synthesisFile, translationFile, writeJson } from './lib.mjs';
+import { readJson, ROOT, summaryFile, synthesisFile, translationFile, writeJson } from './lib.mjs';
 
 const client = new Anthropic();
 
@@ -86,6 +86,25 @@ async function collect(jobFile) {
       await writeJson(translationFile(lang, id, Number(surah), job.out), texts);
       written++;
     }
+  } else if (job.task === 'summary') {
+    const file = summaryFile(job.out);
+    const data = await readJson(file, {});
+    for (const [customId, meta] of Object.entries(job.items)) {
+      if (!outputs.has(customId)) continue;
+      let parsed;
+      try {
+        parsed = JSON.parse(outputs.get(customId));
+      } catch {
+        failed.push({ id: customId, reason: 'invalid_json' });
+        continue;
+      }
+      for (const lang of ['ar', 'fr', 'en']) {
+        data[lang] ??= Array(114).fill('');
+        data[lang][meta.surah - 1] = parsed[lang].trim();
+      }
+      written++;
+    }
+    await writeJson(file, data);
   } else {
     const bySurah = new Map();
     for (const [customId, meta] of Object.entries(job.items)) {

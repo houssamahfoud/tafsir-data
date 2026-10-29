@@ -81,6 +81,10 @@ export function synthesisFile(surah, out = '') {
   return path.join(ROOT, out, 'synthesis', `${surah}.json`);
 }
 
+export function summaryFile(out = '') {
+  return path.join(ROOT, out, 'summaries.json');
+}
+
 export function parseSurahs(spec) {
   const out = new Set();
   for (const part of spec.split(',')) {

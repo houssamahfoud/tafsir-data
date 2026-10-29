@@ -33,6 +33,17 @@ Write one synthesis that a general reader can understand in two minutes:
 
 Write the same synthesis in Arabic, French and English: "ar" in clear Modern Standard Arabic, "fr" in French, "en" in English, each a full, natural text in that language (not a word-for-word copy of the others).`;
 
+export const SUMMARY_SYSTEM = `You write the short introduction shown at the top of each surah in a Qur'an study app, before the reader picks a verse. You receive the full text of the surah in Arabic with an English translation.
+
+Say what the surah is about: its main themes and, when it is well known, the context of its revelation. At most three short sentences (about 40 to 60 words), plain and neutral, without headings, lists or the surah's name as a title.
+
+Write it in Arabic, French and English: "ar" in clear Modern Standard Arabic, "fr" in French, "en" in English.`;
+
+export function summaryUser({ surah, name, verses }) {
+  const lines = verses.map((v) => `${v.n}. ${v.ar}\n   ${v.en}`);
+  return `Surah ${surah} (${name}):\n\n${lines.join('\n')}`;
+}
+
 export function synthesisUser({ surah, ayah, verseText, sources }) {
   const parts = sources.map(
     (s, i) => `<commentary index="${i + 1}" author="${s.author}" work="${s.title}">\n${s.text}\n</commentary>`,

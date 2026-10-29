@@ -5,6 +5,7 @@
 //
 //   node pipeline/submit.mjs --task translate --surahs 103,112-114 --model claude-sonnet-5-5
 //   node pipeline/submit.mjs --task synthesis --surahs 1 --model claude-sonnet-5-5 --dry-run
+//   node pipeline/submit.mjs --task summary --surahs 1-114 --model claude-sonnet-5-5
 //   (--out pilot/<name> writes the results to a separate folder)
 import { existsSync } from 'node:fs';
 
@@ -19,13 +20,16 @@ import {
   readJson,
   ROOT,
   splitChunks,
+  summaryFile,
   synthesisFile,
   translationFile,
   writeJson,
 } from './lib.mjs';
 import {
+  SUMMARY_SYSTEM,
   SYNTHESIS_SCHEMA,
   SYNTHESIS_SYSTEM,
+  summaryUser,
   synthesisUser,
   translationSystem,
   translationUser,
@@ -37,8 +41,8 @@ const model = arg('model', 'claude-sonnet-5-5');
 const out = arg('out', '');
 const dryRun = process.argv.includes('--dry-run');
 
-if (!['translate', 'synthesis'].includes(task) || surahs.length === 0) {
-  console.error('Usage: submit.mjs --task translate|synthesis --surahs 1,2-5 [--model ID] [--out DIR] [--dry-run]');
+if (!['translate', 'synthesis', 'summary'].includes(task) || surahs.length === 0) {
+  console.error('Usage: submit.mjs --task translate|synthesis|summary --surahs 1,2-5 [--model ID] [--out DIR] [--dry-run]');
   process.exit(1);
 }
 
@@ -119,8 +123,35 @@ async function buildSyntheses() {
   }
 }
 
+// A three-sentence introduction per surah, in every reading language.
+async function buildSummaries() {
+  const fetchEdition = async (name) =>
+    (await (await fetch(`https://raw.githubusercontent.com/fawazahmed0/quran-api/1/editions/${name}.min.json`)).json()).quran;
+  const [ar, en] = await Promise.all([fetchEdition('ara-quranuthmanienc'), fetchEdition('eng-rowwadtranslati')]);
+  const names = await (await fetch('https://raw.githubusercontent.com/fawazahmed0/quran-api/1/info.json')).json();
+  const existing = await readJson(summaryFile(out), {});
+  for (const surah of surahs) {
+    if (READING_LANGS.every((lang) => existing[lang]?.[surah - 1])) continue;
+    const verses = ar
+      .filter((v) => v.chapter === surah)
+      .map((v) => ({ n: v.verse, ar: v.text, en: en.find((e) => e.chapter === surah && e.verse === v.verse).text }));
+    requests.push({
+      custom_id: `m${++seq}`,
+      meta: { surah },
+      params: {
+        model,
+        max_tokens: 4000,
+        output_config: { effort: 'medium', format: { type: 'json_schema', schema: SYNTHESIS_SCHEMA } },
+        system: [{ type: 'text', text: SUMMARY_SYSTEM, cache_control: { type: 'ephemeral' } }],
+        messages: [{ role: 'user', content: summaryUser({ surah, name: names.chapters[surah - 1].name, verses }) }],
+      },
+    });
+  }
+}
+
 if (task === 'translate') await buildTranslations();
-else await buildSyntheses();
+else if (task === 'synthesis') await buildSyntheses();
+else await buildSummaries();
 
 const inputChars = requests.reduce((n, r) => n + r.params.messages[0].content.length, 0);
 console.log(`${requests.length} requests, ${(inputChars / 1e6).toFixed(2)} M characters of source text`);
